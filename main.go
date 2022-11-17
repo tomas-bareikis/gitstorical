@@ -16,11 +16,22 @@ func main() {
 
 	defer os.RemoveAll(tempPath)
 
-	_, err = git.PlainClone(tempPath, false, &git.CloneOptions{
+	r, err := git.PlainClone(tempPath, false, &git.CloneOptions{
 		URL:      "https://github.com/go-git/go-git",
 		Progress: os.Stdout,
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	w, err := r.Worktree()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = w.Checkout(&git.CheckoutOptions{
+		Branch: "refs/tags/v5.4.1",
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
