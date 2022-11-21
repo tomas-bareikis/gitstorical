@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"os/exec"
 
 	"github.com/go-git/go-git/v5"
 )
@@ -35,4 +36,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	cmd := exec.Command("gocyclo", "-avg", ".")
+	cmd.Dir = tempPath
+	out, err := cmd.Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	output := string(out)
+	log.Println(output)
 }
