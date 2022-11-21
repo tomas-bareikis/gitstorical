@@ -4,8 +4,10 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 )
 
 func main() {
@@ -25,25 +27,42 @@ func main() {
 		log.Fatal(err)
 	}
 
-	w, err := r.Worktree()
+	tagRefs, err := r.Tags()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = w.Checkout(&git.CheckoutOptions{
-		Branch: "refs/tags/v5.4.1",
+	allTagNames := []plumbing.ReferenceName{}
+	err = tagRefs.ForEach(func(t *plumbing.Reference) error {
+		allTagNames = append(allTagNames, t.Name())
+		return nil
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cmd := exec.Command("gocyclo", "-avg", ".")
-	cmd.Dir = tempPath
-	out, err := cmd.Output()
+	w, err := r.Worktree()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	output := string(out)
-	log.Println(output)
+	for _, t := range allTagNames {
+		err = w.Checkout(&git.CheckoutOptions{
+			Branch: t,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		cmd := exec.Command("gocyclo", "-avg", ".")
+		cmd.Dir = tempPath
+		out, err := cmd.Output()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		output := string(out)
+		lines := strings.Split(output, "\n")
+		log.Println(lines[len(lines)-2])
+	}
 }
