@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"strings"
 
 	"github.com/bitfield/script"
 	"github.com/go-git/go-git/v5"
@@ -56,12 +55,11 @@ func main() {
 			log.Fatal(err)
 		}
 
-		output, err := script.Exec("gocyclo -avg .").String()
+		output, err := script.Exec("gocyclo -avg .").Exec(`grep "Average"`).String()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		lines := strings.Split(output, "\n")
-		log.Println(lines[len(lines)-2])
+		log.Println(output)
 	}
 }
