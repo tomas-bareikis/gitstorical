@@ -29,9 +29,16 @@ func main() {
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
+
+	// Example: go run main.go https://github.com/go-git/go-git 'gocyclo -avg .' 'grep "Average"'
 }
 
-func do(*cli.Context) error {
+func do(cCtx *cli.Context) error {
+	args := cCtx.Args()
+	gitRepo := args.Get(0)
+	command := args.Get(1)
+	filter := args.Get(2)
+
 	tempPath, err := os.MkdirTemp("", "gitstorical")
 	if err != nil {
 		log.Fatal(err)
@@ -41,7 +48,7 @@ func do(*cli.Context) error {
 	defer os.RemoveAll(tempPath)
 
 	r, err := git.PlainClone(tempPath, false, &git.CloneOptions{
-		URL:      "https://github.com/go-git/go-git",
+		URL:      gitRepo,
 		Progress: os.Stdout,
 	})
 	if err != nil {
@@ -77,7 +84,7 @@ func do(*cli.Context) error {
 			log.Fatal(err)
 		}
 
-		output, err := script.Exec("gocyclo -avg .").Exec(`grep "Average"`).String()
+		output, err := script.Exec(command).Exec(filter).String()
 		if err != nil {
 			log.Fatal(err)
 		}
