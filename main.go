@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 	"os"
-	"os/exec"
 	"strings"
 
+	"github.com/bitfield/script"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 )
@@ -46,6 +46,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	os.Chdir(tempPath)
+
 	for _, t := range allTagNames {
 		err = w.Checkout(&git.CheckoutOptions{
 			Branch: t,
@@ -54,14 +56,11 @@ func main() {
 			log.Fatal(err)
 		}
 
-		cmd := exec.Command("gocyclo", "-avg", ".")
-		cmd.Dir = tempPath
-		out, err := cmd.Output()
+		output, err := script.Exec("gocyclo -avg .").String()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		output := string(out)
 		lines := strings.Split(output, "\n")
 		log.Println(lines[len(lines)-2])
 	}
