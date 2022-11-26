@@ -3,13 +3,35 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/bitfield/script"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
+	app := &cli.App{
+		Name:     "gitstorical",
+		Usage:    "runs a command on different versions of a git repo",
+		Version:  "v0.01",
+		Compiled: time.Now(),
+		Authors: []*cli.Author{
+			{
+				Name:  "Tomas Bareikis",
+				Email: "tomas.bareikis@pm.me",
+			},
+		},
+		Action: do,
+	}
+
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func do(*cli.Context) error {
 	tempPath, err := os.MkdirTemp("", "gitstorical")
 	if err != nil {
 		log.Fatal(err)
@@ -62,4 +84,6 @@ func main() {
 
 		log.Println(output)
 	}
+
+	return nil
 }
