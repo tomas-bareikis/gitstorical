@@ -77,20 +77,27 @@ func do(cCtx *cli.Context) error {
 	os.Chdir(tempPath)
 
 	for _, t := range allTagNames {
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: t,
-		})
+		out, err := processReference(w, t, command, filter)
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		output, err := script.Exec(command).Exec(filter).String()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		log.Println(output)
+		log.Println(out)
 	}
 
 	return nil
+}
+
+func processReference(
+	wt *git.Worktree,
+	ref plumbing.ReferenceName,
+	command, filter string,
+) (string, error) {
+	err := wt.Checkout(&git.CheckoutOptions{
+		Branch: ref,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return script.Exec(command).Exec(filter).String()
 }
