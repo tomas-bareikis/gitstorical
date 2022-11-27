@@ -3,6 +3,7 @@ module github.com/tomas-bareikis/gitstorical
 go 1.19
 
 require (
+	github.com/apex/log v1.9.0
 	github.com/bitfield/script v0.21.3
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/urfave/cli/v2 v2.23.5
@@ -23,6 +24,7 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect

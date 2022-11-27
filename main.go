@@ -1,10 +1,12 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"time"
 
+	"github.com/apex/log"
+	"github.com/apex/log/handlers/text"
 	"github.com/bitfield/script"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -12,6 +14,9 @@ import (
 )
 
 func main() {
+	log.SetHandler(text.New(os.Stderr))
+	log.SetLevel(log.DebugLevel)
+
 	app := &cli.App{
 		Name:     "gitstorical",
 		Usage:    "runs a command on different versions of a git repo",
@@ -27,7 +32,7 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal("gitstorcal error")
 	}
 
 	// Example: go run main.go https://github.com/go-git/go-git 'gocyclo -avg .' 'grep "Average"'
@@ -39,11 +44,19 @@ func do(cCtx *cli.Context) error {
 	command := args.Get(1)
 	filter := args.Get(2)
 
+	l := log.WithFields(
+		log.Fields{
+			"gitRepo": gitRepo,
+			"command": command,
+			"filter":  filter,
+		},
+	)
+
 	tempPath, err := os.MkdirTemp("", "gitstorical")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	log.Println("created dir", tempPath)
+	l.WithField("tmpDir", tempPath).Debug("created temp dir")
 
 	defer os.RemoveAll(tempPath)
 
@@ -52,12 +65,12 @@ func do(cCtx *cli.Context) error {
 		Progress: os.Stdout,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	tagRefs, err := r.Tags()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	allTagNames := []plumbing.ReferenceName{}
@@ -66,12 +79,14 @@ func do(cCtx *cli.Context) error {
 		return nil
 	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+
+	l.WithField("refs", allTagNames).Debug("found refs")
 
 	w, err := r.Worktree()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	os.Chdir(tempPath)
@@ -79,9 +94,9 @@ func do(cCtx *cli.Context) error {
 	for _, t := range allTagNames {
 		out, err := processReference(w, t, command, filter)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		log.Println(out)
+		fmt.Println(out)
 	}
 
 	return nil
@@ -96,7 +111,7 @@ func processReference(
 		Branch: ref,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	return script.Exec(command).Exec(filter).String()
