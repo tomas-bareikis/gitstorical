@@ -15,7 +15,7 @@ import (
 
 func main() {
 	log.SetHandler(text.New(os.Stderr))
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.WarnLevel)
 
 	app := &cli.App{
 		Name:     "gitstorical",
@@ -26,6 +26,17 @@ func main() {
 			{
 				Name:  "Tomas Bareikis",
 				Email: "tomas.bareikis@pm.me",
+			},
+		},
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "verbose",
+				Value: false,
+				Usage: "verbose mode",
+				Action: func(ctx *cli.Context, b bool) error {
+					log.SetLevel(log.DebugLevel)
+					return nil
+				},
 			},
 		},
 		Action: do,
