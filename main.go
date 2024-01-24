@@ -11,6 +11,7 @@ import (
 	"github.com/bitfield/script"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/urfave/cli/v2"
 )
 
@@ -72,7 +73,13 @@ func do(cCtx *cli.Context) error {
 
 	defer os.RemoveAll(tempPath)
 
+	authMethod, err := ssh.NewSSHAgentAuth("git")
+	if err != nil {
+		return err
+	}
+
 	r, err := git.PlainClone(tempPath, false, &git.CloneOptions{
+		Auth:     authMethod,
 		URL:      gitRepo,
 		Progress: os.Stdout,
 	})
