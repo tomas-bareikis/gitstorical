@@ -125,5 +125,10 @@ func processReference(
 		return "", err
 	}
 
-	return script.Exec(command).Exec(filter).String()
+	out, err := script.Exec(command).String()
+	if err != nil {
+		return out, err
+	}
+
+	return script.Echo(out).Exec(filter).String()
 }
