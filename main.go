@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/apex/log"
@@ -107,6 +108,8 @@ func do(cCtx *cli.Context) error {
 		if err != nil {
 			return err
 		}
+
+		out = strings.TrimSpace(out)
 		fmt.Println(out)
 	}
 
