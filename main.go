@@ -110,7 +110,7 @@ func do(cCtx *cli.Context) error {
 		}
 
 		out = strings.TrimSpace(out)
-		fmt.Println(out)
+		fmt.Printf("%s,%s\n", t.String(), out)
 	}
 
 	return nil
