@@ -13,6 +13,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/urfave/cli/v2"
+	giturls "github.com/whilp/git-urls"
 )
 
 func main() {
@@ -48,7 +49,7 @@ func main() {
 		log.WithError(err).Fatal("gitstorcal error")
 	}
 
-	// Example: go run main.go https://github.com/go-git/go-git 'gocyclo -avg .' 'grep "Average"'
+	// Example: go run main.go git@github.com:go-git/go-git.git 'gocyclo -avg .' 'grep "Average"'
 }
 
 func do(cCtx *cli.Context) error {
@@ -73,16 +74,26 @@ func do(cCtx *cli.Context) error {
 
 	defer os.RemoveAll(tempPath)
 
-	authMethod, err := ssh.NewSSHAgentAuth("git")
+	cloneOptions := &git.CloneOptions{
+		URL:      gitRepo,
+		Progress: os.Stdout,
+		Depth:    1,
+	}
+
+	parsedGitURL, err := giturls.Parse(gitRepo)
 	if err != nil {
 		return err
 	}
 
-	r, err := git.PlainClone(tempPath, false, &git.CloneOptions{
-		Auth:     authMethod,
-		URL:      gitRepo,
-		Progress: os.Stdout,
-	})
+	if parsedGitURL.Scheme == "ssh" {
+		sshAuthMethod, err := ssh.NewSSHAgentAuth("git")
+		if err != nil {
+			return err
+		}
+		cloneOptions.Auth = sshAuthMethod
+	}
+
+	r, err := git.PlainClone(tempPath, false, cloneOptions)
 	if err != nil {
 		return err
 	}
