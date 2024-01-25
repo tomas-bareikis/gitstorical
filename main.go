@@ -93,15 +93,18 @@ func do(cCtx *cli.Context) error {
 		cloneOptions.Auth = sshAuthMethod
 	}
 
+	l.Debug("starting repo clone")
 	r, err := git.PlainClone(tempPath, false, cloneOptions)
 	if err != nil {
 		return err
 	}
+	l.Debug("repo cloning complete")
 
 	tagRefs, err := r.Tags()
 	if err != nil {
 		return err
 	}
+	l.Debug("retrieved all tags")
 
 	allTagNames := []plumbing.ReferenceName{}
 	err = tagRefs.ForEach(func(t *plumbing.Reference) error {
