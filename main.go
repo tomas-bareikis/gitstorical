@@ -143,6 +143,7 @@ func processReference(
 ) (string, error) {
 	err := wt.Checkout(&git.CheckoutOptions{
 		Branch: ref,
+		Force: true,
 	})
 	if err != nil {
 		return "", err
