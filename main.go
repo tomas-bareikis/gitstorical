@@ -77,7 +77,6 @@ func do(cCtx *cli.Context) error {
 	cloneOptions := &git.CloneOptions{
 		URL:      gitRepo,
 		Progress: os.Stdout,
-		Depth:    1,
 	}
 
 	parsedGitURL, err := giturls.Parse(gitRepo)
