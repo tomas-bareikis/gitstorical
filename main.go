@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tomas-bareikis/gitstorical/files"
+
 	"github.com/apex/log"
 	"github.com/apex/log/handlers/text"
 	"github.com/bitfield/script"
@@ -15,6 +17,8 @@ import (
 	"github.com/urfave/cli/v2"
 	giturls "github.com/whilp/git-urls"
 )
+
+var checkoutDir string
 
 func main() {
 	log.SetHandler(text.New(os.Stderr))
@@ -41,6 +45,15 @@ func main() {
 					return nil
 				},
 			},
+			&cli.StringFlag{
+				Name:  "checkoutDir",
+				Value: "",
+				Usage: "directory where the git repo will be checked out",
+				Action: func(ctx *cli.Context, s string) error {
+					checkoutDir = s
+					return nil
+				},
+			},
 		},
 		Action: do,
 	}
@@ -54,52 +67,65 @@ func main() {
 
 func do(cCtx *cli.Context) error {
 	args := cCtx.Args()
-	gitRepo := args.Get(0)
+	gitURL := args.Get(0)
 	command := args.Get(1)
 	filter := args.Get(2)
 
 	l := log.WithFields(
 		log.Fields{
-			"gitRepo": gitRepo,
-			"command": command,
-			"filter":  filter,
+			"gitURL":      gitURL,
+			"command":     command,
+			"filter":      filter,
+			"checkoutDir": checkoutDir,
 		},
 	)
 
-	tempPath, err := os.MkdirTemp("", "gitstorical")
-	if err != nil {
-		return err
-	}
-	l.WithField("tmpDir", tempPath).Debug("created temp dir")
+	var err error
 
-	defer os.RemoveAll(tempPath)
-
-	cloneOptions := &git.CloneOptions{
-		URL:      gitRepo,
-		Progress: os.Stdout,
-	}
-
-	parsedGitURL, err := giturls.Parse(gitRepo)
-	if err != nil {
-		return err
-	}
-
-	if parsedGitURL.Scheme == "ssh" {
-		sshAuthMethod, err := ssh.NewSSHAgentAuth("git")
+	if checkoutDir == "" {
+		checkoutDir, err = os.MkdirTemp("", "gitstorical")
 		if err != nil {
 			return err
 		}
-		cloneOptions.Auth = sshAuthMethod
+		l.WithField("tmpDir", checkoutDir).Debug("created temp dir")
+
+		defer os.RemoveAll(checkoutDir)
 	}
 
-	l.Debug("starting repo clone")
-	r, err := git.PlainClone(tempPath, false, cloneOptions)
+	if !files.Exists(checkoutDir) {
+		err := os.MkdirAll(checkoutDir, os.ModePerm)
+		if err != nil {
+			return err
+		}
+
+		l.Debug("created checkout dir")
+	}
+
+	dirEmpty, err := files.IsDirEmpty(checkoutDir)
 	if err != nil {
 		return err
 	}
-	l.Debug("repo cloning complete")
 
-	tagRefs, err := r.Tags()
+	var repo *git.Repository
+	if dirEmpty {
+		l.Debug("starting repo clone")
+
+		err = cloneToPath(checkoutDir, gitURL)
+		if err != nil {
+			return err
+		}
+
+		l.Debug("repo cloning complete")
+	} else {
+		l.Debug("checkoutDir not empty, skipping clone")
+	}
+	
+	repo, err = git.PlainOpen(checkoutDir)
+	if err != nil {
+		return err
+	}
+
+	tagRefs, err := repo.Tags()
 	if err != nil {
 		return err
 	}
@@ -116,12 +142,12 @@ func do(cCtx *cli.Context) error {
 
 	l.WithField("refs", allTagNames).Debug("found refs")
 
-	w, err := r.Worktree()
+	w, err := repo.Worktree()
 	if err != nil {
 		return err
 	}
 
-	os.Chdir(tempPath)
+	os.Chdir(checkoutDir)
 
 	for _, t := range allTagNames {
 		out, err := processReference(w, t, command, filter)
@@ -143,7 +169,7 @@ func processReference(
 ) (string, error) {
 	err := wt.Checkout(&git.CheckoutOptions{
 		Branch: ref,
-		Force: true,
+		Force:  true,
 	})
 	if err != nil {
 		return "", err
@@ -155,4 +181,27 @@ func processReference(
 	}
 
 	return script.Echo(out).Exec(filter).String()
+}
+
+func cloneToPath(path, gitURL string) error {
+	cloneOptions := &git.CloneOptions{
+		URL:      gitURL,
+		Progress: os.Stdout,
+	}
+
+	parsedGitURL, err := giturls.Parse(gitURL)
+	if err != nil {
+		return err
+	}
+
+	if parsedGitURL.Scheme == "ssh" {
+		sshAuthMethod, err := ssh.NewSSHAgentAuth("git")
+		if err != nil {
+			return err
+		}
+		cloneOptions.Auth = sshAuthMethod
+	}
+
+	_, err = git.PlainClone(checkoutDir, false, cloneOptions)
+	return err
 }
