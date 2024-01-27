@@ -62,20 +62,18 @@ func main() {
 		log.WithError(err).Fatal("gitstorcal error")
 	}
 
-	// Example: go run main.go git@github.com:go-git/go-git.git 'gocyclo -avg .' 'grep "Average"'
+	// Example: go run main.go git@github.com:go-git/go-git.git 'gocyclo -avg .'
 }
 
 func do(cCtx *cli.Context) error {
 	args := cCtx.Args()
 	gitURL := args.Get(0)
 	command := args.Get(1)
-	filter := args.Get(2)
 
 	l := log.WithFields(
 		log.Fields{
 			"gitURL":      gitURL,
 			"command":     command,
-			"filter":      filter,
 			"checkoutDir": checkoutDir,
 		},
 	)
@@ -150,13 +148,13 @@ func do(cCtx *cli.Context) error {
 	os.Chdir(checkoutDir)
 
 	for _, t := range allTagNames {
-		out, err := processReference(w, t, command, filter)
+		out, err := processReference(w, t, command)
 		if err != nil {
 			return err
 		}
 
 		out = strings.TrimSpace(out)
-		fmt.Printf("%s,%s\n", t.String(), out)
+		fmt.Printf("%s\n%s\n", t.String(), out)
 	}
 
 	return nil
@@ -165,7 +163,7 @@ func do(cCtx *cli.Context) error {
 func processReference(
 	wt *git.Worktree,
 	ref plumbing.ReferenceName,
-	command, filter string,
+	command string,
 ) (string, error) {
 	err := wt.Checkout(&git.CheckoutOptions{
 		Branch: ref,
@@ -180,7 +178,7 @@ func processReference(
 		return out, err
 	}
 
-	return script.Echo(out).Exec(filter).String()
+	return script.Echo(out).String()
 }
 
 func cloneToPath(path, gitURL string) error {
