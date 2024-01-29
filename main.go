@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/tomas-bareikis/gitstorical/files"
+	"github.com/tomas-bareikis/gitstorical/format"
 
 	"github.com/apex/log"
 	"github.com/apex/log/handlers/text"
@@ -19,6 +19,7 @@ import (
 )
 
 var checkoutDir string
+var outputFormat = format.Plain
 
 func main() {
 	log.SetHandler(text.New(os.Stderr))
@@ -52,6 +53,17 @@ func main() {
 				Action: func(ctx *cli.Context, s string) error {
 					checkoutDir = s
 					return nil
+				},
+			},
+			&cli.StringFlag{
+				Name:  "outputFormat",
+				Value: "plain",
+				Usage: "output format to use [plain, jsonl], default - plain",
+				Action: func(ctx *cli.Context, s string) error {
+					var err error
+
+					outputFormat, err = format.ParseType(s)
+					return err
 				},
 			},
 		},
@@ -117,7 +129,7 @@ func do(cCtx *cli.Context) error {
 	} else {
 		l.Debug("checkoutDir not empty, skipping clone")
 	}
-	
+
 	repo, err = git.PlainOpen(checkoutDir)
 	if err != nil {
 		return err
@@ -153,8 +165,12 @@ func do(cCtx *cli.Context) error {
 			return err
 		}
 
-		out = strings.TrimSpace(out)
-		fmt.Printf("%s\n%s\n", t.String(), out)
+		formatted, err := format.String(outputFormat, t.String(), out)
+		if err != nil {
+			return err
+		}
+
+		fmt.Print(formatted)
 	}
 
 	return nil
