@@ -7,9 +7,9 @@ import (
 
 	"github.com/tomas-bareikis/gitstorical/files"
 	"github.com/tomas-bareikis/gitstorical/format"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
-	"github.com/apex/log"
-	"github.com/apex/log/handlers/text"
 	"github.com/bitfield/script"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -20,10 +20,18 @@ import (
 
 var checkoutDir string
 var outputFormat = format.Plain
+var log *zap.SugaredLogger
 
 func main() {
-	log.SetHandler(text.New(os.Stderr))
-	log.SetLevel(log.WarnLevel)
+	logLevel := zap.NewAtomicLevel()
+	zapLog := zap.New(zapcore.NewCore(
+		zapcore.NewConsoleEncoder(zap.NewProductionEncoderConfig()),
+		zapcore.Lock(os.Stderr),
+		logLevel,
+	))
+
+	defer zapLog.Sync()
+	log = zapLog.Sugar()
 
 	app := &cli.App{
 		Name:     "gitstorical",
@@ -42,7 +50,7 @@ func main() {
 				Value: false,
 				Usage: "verbose mode",
 				Action: func(ctx *cli.Context, b bool) error {
-					log.SetLevel(log.DebugLevel)
+					logLevel.SetLevel(zapcore.DebugLevel)
 					return nil
 				},
 			},
@@ -71,7 +79,7 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		log.WithError(err).Fatal("gitstorcal error")
+		log.With(err).Fatal("gitstorcal error")
 	}
 
 	// Example: go run main.go git@github.com:go-git/go-git.git 'gocyclo -avg .'
@@ -82,12 +90,10 @@ func do(cCtx *cli.Context) error {
 	gitURL := args.Get(0)
 	command := args.Get(1)
 
-	l := log.WithFields(
-		log.Fields{
-			"gitURL":      gitURL,
-			"command":     command,
-			"checkoutDir": checkoutDir,
-		},
+	l := log.With(
+		"gitURL", gitURL,
+		"command", command,
+		"checkoutDir", checkoutDir,
 	)
 
 	var err error
@@ -97,7 +103,7 @@ func do(cCtx *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		l.WithField("tmpDir", checkoutDir).Debug("created temp dir")
+		l.With("tmpDir", checkoutDir).Debug("created temp dir")
 
 		defer os.RemoveAll(checkoutDir)
 	}
@@ -150,7 +156,7 @@ func do(cCtx *cli.Context) error {
 		return err
 	}
 
-	l.WithField("refs", allTagNames).Debug("found refs")
+	l.With("refs", allTagNames).Debug("found refs")
 
 	w, err := repo.Worktree()
 	if err != nil {
