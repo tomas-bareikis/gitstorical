@@ -24,8 +24,9 @@ var log *zap.SugaredLogger
 
 func main() {
 	logLevel := zap.NewAtomicLevel()
+
 	zapLog := zap.New(zapcore.NewCore(
-		zapcore.NewConsoleEncoder(zap.NewProductionEncoderConfig()),
+		zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
 		zapcore.Lock(os.Stderr),
 		logLevel,
 	))
