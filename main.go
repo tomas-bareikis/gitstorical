@@ -207,7 +207,7 @@ func processReference(
 func cloneToPath(path, gitURL string) error {
 	cloneOptions := &git.CloneOptions{
 		URL:      gitURL,
-		Progress: os.Stdout,
+		Progress: os.Stderr,
 	}
 
 	parsedGitURL, err := giturls.Parse(gitURL)
