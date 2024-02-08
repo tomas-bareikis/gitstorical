@@ -3,8 +3,9 @@ package ref
 import (
 	"sort"
 
-	"github.com/coreos/go-semver/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -25,8 +26,24 @@ func SortTags(tags []plumbing.ReferenceName, log *zap.SugaredLogger) error {
 			return false
 		}
 
-		return parsedI.LessThan(*parsedJ)
+		return parsedI.LessThan(parsedJ)
 	})
 
 	return nil
+}
+
+func TagsFilter(tags []plumbing.ReferenceName, Constraints *semver.Constraints) ([]plumbing.ReferenceName, error) {
+	var result []plumbing.ReferenceName
+	for _, t := range tags {
+		parsedTag, err := semver.NewVersion(t.Short())
+		if err != nil {
+			return result, errors.Wrapf(err, "cannot parse tag %s", t.Short())
+		}
+
+		if Constraints.Check(parsedTag) {
+			result = append(result, t)
+		}
+	}
+
+	return result, nil
 }

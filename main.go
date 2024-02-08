@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/tomas-bareikis/gitstorical/files"
 	"github.com/tomas-bareikis/gitstorical/format"
 	"github.com/tomas-bareikis/gitstorical/ref"
@@ -21,6 +22,7 @@ import (
 
 var checkoutDir string
 var outputFormat = format.Plain
+var semverConstraints *semver.Constraints
 var log *zap.SugaredLogger
 
 func main() {
@@ -73,6 +75,17 @@ func main() {
 					var err error
 
 					outputFormat, err = format.ParseType(s)
+					return err
+				},
+			},
+			&cli.StringFlag{
+				Name:  "tagFilter",
+				Value: "",
+				Usage: "semver constraint to filter tags by, e.g. '>=1.0.0 <2.0.0'",
+				Action: func(ctx *cli.Context, s string) error {
+					var err error
+
+					semverConstraints, err = semver.NewConstraint(s)
 					return err
 				},
 			},
@@ -156,6 +169,13 @@ func do(cCtx *cli.Context) error {
 	})
 	if err != nil {
 		return err
+	}
+
+	if semverConstraints != nil {
+		allTagNames, err = ref.TagsFilter(allTagNames, semverConstraints)
+		if err != nil {
+			return err
+		}
 	}
 
 	ref.SortTags(allTagNames, log)
