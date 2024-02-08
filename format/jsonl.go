@@ -3,6 +3,8 @@ package format
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/go-git/go-git/v5/plumbing"
 )
 
 type jsonElement struct {
@@ -10,9 +12,9 @@ type jsonElement struct {
 	Output string `json:"output"`
 }
 
-func jsonLines(ref, output string) (string, error) {
+func jsonLines(ref plumbing.ReferenceName, output string) (string, error) {
 	element := jsonElement{
-		Ref:    ref,
+		Ref:    ref.Short(),
 		Output: output,
 	}
 

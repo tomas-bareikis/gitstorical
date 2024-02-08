@@ -3,9 +3,11 @@ package format
 import (
 	"fmt"
 	"strings"
+
+	"github.com/go-git/go-git/v5/plumbing"
 )
 
-func String(format Format, ref, output string) (string, error) {
+func String(format Format, ref plumbing.ReferenceName, output string) (string, error) {
 	output = strings.TrimSpace(output)
 
 	switch format {

@@ -4,7 +4,9 @@ go 1.21
 
 require (
 	github.com/bitfield/script v0.22.0
+	github.com/coreos/go-semver v0.3.1
 	github.com/go-git/go-git/v5 v5.11.0
+	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli/v2 v2.27.1
 	github.com/whilp/git-urls v1.0.0
 	go.uber.org/zap v1.26.0

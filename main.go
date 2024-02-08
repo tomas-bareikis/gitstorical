@@ -7,6 +7,7 @@ import (
 
 	"github.com/tomas-bareikis/gitstorical/files"
 	"github.com/tomas-bareikis/gitstorical/format"
+	"github.com/tomas-bareikis/gitstorical/ref"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -157,6 +158,8 @@ func do(cCtx *cli.Context) error {
 		return err
 	}
 
+	ref.SortTags(allTagNames, log)
+
 	l.With("refs", allTagNames).Debug("found refs")
 
 	w, err := repo.Worktree()
@@ -172,7 +175,7 @@ func do(cCtx *cli.Context) error {
 			return err
 		}
 
-		formatted, err := format.String(outputFormat, t.String(), out)
+		formatted, err := format.String(outputFormat, t, out)
 		if err != nil {
 			return err
 		}
