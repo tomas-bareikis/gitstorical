@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func SortTags(tags []plumbing.ReferenceName, log *zap.SugaredLogger) error {
+func SortTags(tags []plumbing.ReferenceName, log *zap.SugaredLogger) {
 	sort.Slice(tags, func(i, j int) bool {
 		semverI := tags[i].Short()
 		semverJ := tags[j].Short()
@@ -28,8 +28,6 @@ func SortTags(tags []plumbing.ReferenceName, log *zap.SugaredLogger) error {
 
 		return parsedI.LessThan(parsedJ)
 	})
-
-	return nil
 }
 
 func TagsFilter(tags []plumbing.ReferenceName, Constraints *semver.Constraints) ([]plumbing.ReferenceName, error) {
