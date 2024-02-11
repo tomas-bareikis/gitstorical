@@ -3,6 +3,8 @@ package files
 import (
 	"io"
 	"os"
+
+	"github.com/pkg/errors"
 )
 
 func Exists(path string) bool {
@@ -13,7 +15,7 @@ func Exists(path string) bool {
 func IsDirEmpty(path string) (bool, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "failed to open dir")
 	}
 	defer f.Close()
 
@@ -21,5 +23,5 @@ func IsDirEmpty(path string) (bool, error) {
 	if err == io.EOF {
 		return true, nil
 	}
-	return false, err
+	return false, errors.Wrap(err, "failed to read dir")
 }

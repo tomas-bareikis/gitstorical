@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/pkg/errors"
 )
 
 type jsonElement struct {
@@ -20,7 +21,7 @@ func jsonLines(ref plumbing.ReferenceName, output string) (string, error) {
 
 	bytes, err := json.Marshal(element)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to marshal json")
 	}
 
 	return fmt.Sprintf("%s\n", bytes), nil

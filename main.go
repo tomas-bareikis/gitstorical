@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/pkg/errors"
 	"github.com/tomas-bareikis/gitstorical/files"
 	"github.com/tomas-bareikis/gitstorical/format"
 	"github.com/tomas-bareikis/gitstorical/ref"
@@ -116,7 +117,7 @@ func do(cCtx *cli.Context) error {
 	if checkoutDir == "" {
 		checkoutDir, err = os.MkdirTemp("", "gitstorical")
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to create temp dir")
 		}
 		l.With("tmpDir", checkoutDir).Debug("created temp dir")
 
@@ -126,7 +127,7 @@ func do(cCtx *cli.Context) error {
 	if !files.Exists(checkoutDir) {
 		err := os.MkdirAll(checkoutDir, os.ModePerm)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to create checkout dir")
 		}
 
 		l.Debug("created checkout dir")
@@ -134,7 +135,7 @@ func do(cCtx *cli.Context) error {
 
 	dirEmpty, err := files.IsDirEmpty(checkoutDir)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to check if checkout dir is empty")
 	}
 
 	var repo *git.Repository
@@ -143,7 +144,7 @@ func do(cCtx *cli.Context) error {
 
 		err = cloneToPath(checkoutDir, gitURL)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to clone repo")
 		}
 
 		l.Debug("repo cloning complete")
@@ -153,12 +154,12 @@ func do(cCtx *cli.Context) error {
 
 	repo, err = git.PlainOpen(checkoutDir)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to open repo")
 	}
 
 	tagRefs, err := repo.Tags()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to retrieve tags")
 	}
 	l.Debug("retrieved all tags")
 
@@ -168,13 +169,13 @@ func do(cCtx *cli.Context) error {
 		return nil
 	})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to iterate over tags")
 	}
 
 	if semverConstraints != nil {
 		allTagNames, err = ref.TagsFilter(allTagNames, semverConstraints)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to filter tags")
 		}
 	}
 
@@ -184,7 +185,7 @@ func do(cCtx *cli.Context) error {
 
 	w, err := repo.Worktree()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to get worktree")
 	}
 
 	os.Chdir(checkoutDir)
@@ -192,12 +193,12 @@ func do(cCtx *cli.Context) error {
 	for _, t := range allTagNames {
 		out, err := processReference(w, t, command)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to process ref %s", t.Short())
 		}
 
 		formatted, err := format.String(outputFormat, t, out)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to format output for ref %s", t.Short())
 		}
 
 		fmt.Print(formatted)
@@ -216,12 +217,12 @@ func processReference(
 		Force:  true,
 	})
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to checkout ref")
 	}
 
 	out, err := script.Exec(command).String()
 	if err != nil {
-		return out, err
+		return out, errors.Wrap(err, "failed to execute command")
 	}
 
 	return script.Echo(out).String()
@@ -235,7 +236,7 @@ func cloneToPath(path, gitURL string) error {
 
 	parsedGitURL, err := giturls.Parse(gitURL)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to parse git url")
 	}
 
 	if parsedGitURL.Scheme == "ssh" {
@@ -247,5 +248,5 @@ func cloneToPath(path, gitURL string) error {
 	}
 
 	_, err = git.PlainClone(checkoutDir, false, cloneOptions)
-	return err
+	return errors.Wrap(err, "failed to clone repo")
 }
