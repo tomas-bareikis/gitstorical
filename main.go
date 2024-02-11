@@ -35,6 +35,7 @@ func main() {
 		logLevel,
 	))
 
+	//nolint errcheck
 	defer zapLog.Sync()
 	log = zapLog.Sugar()
 
@@ -188,7 +189,10 @@ func do(cCtx *cli.Context) error {
 		return errors.Wrap(err, "failed to get worktree")
 	}
 
-	os.Chdir(checkoutDir)
+	err = os.Chdir(checkoutDir)
+	if err != nil {
+		return errors.Wrap(err, "failed to change dir")
+	}
 
 	for _, t := range allTagNames {
 		out, err := processReference(w, t, command)
