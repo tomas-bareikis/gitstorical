@@ -232,7 +232,7 @@ func processReference(
 	return script.Echo(out).String()
 }
 
-func cloneToPath(path, gitURL string) error {
+func cloneToPath(cloneTo, gitURL string) error {
 	cloneOptions := &git.CloneOptions{
 		URL:      gitURL,
 		Progress: os.Stderr,
@@ -251,6 +251,6 @@ func cloneToPath(path, gitURL string) error {
 		cloneOptions.Auth = sshAuthMethod
 	}
 
-	_, err = git.PlainClone(checkoutDir, false, cloneOptions)
+	_, err = git.PlainClone(cloneTo, false, cloneOptions)
 	return errors.Wrap(err, "failed to clone repo")
 }
