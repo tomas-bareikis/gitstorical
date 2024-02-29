@@ -174,7 +174,7 @@ func do(cCtx *cli.Context) error {
 	}
 
 	if semverConstraints != nil {
-		allTagNames, err = ref.TagsFilter(allTagNames, semverConstraints)
+		allTagNames, err = ref.TagsFilter(allTagNames, semverConstraints, l)
 		if err != nil {
 			return errors.Wrap(err, "failed to filter tags")
 		}

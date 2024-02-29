@@ -5,7 +5,6 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -30,12 +29,15 @@ func SortTags(tags []plumbing.ReferenceName, log *zap.SugaredLogger) {
 	})
 }
 
-func TagsFilter(tags []plumbing.ReferenceName, Constraints *semver.Constraints) ([]plumbing.ReferenceName, error) {
+func TagsFilter(tags []plumbing.ReferenceName, Constraints *semver.Constraints, log *zap.SugaredLogger) ([]plumbing.ReferenceName, error) {
 	var result []plumbing.ReferenceName
 	for _, t := range tags {
-		parsedTag, err := semver.NewVersion(t.Short())
+		shortTag := t.Short()
+
+		parsedTag, err := semver.NewVersion(shortTag)
 		if err != nil {
-			return result, errors.Wrapf(err, "cannot parse tag %s", t.Short())
+			log.With("tag", shortTag).Info("cannot parse semver for filtering. Ignoring tag.")
+			continue
 		}
 
 		if Constraints.Check(parsedTag) {
