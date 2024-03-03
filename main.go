@@ -41,6 +41,12 @@ func main() {
 	defer zapLog.Sync()
 	log = zapLog.Sugar()
 
+	cli.VersionFlag = &cli.BoolFlag{
+		Name:    "version",
+		Aliases: []string{"V"},
+		Usage:   "print only the version",
+	}
+
 	app := &cli.App{
 		Name:     "gitstorical",
 		Usage:    "runs a command on different versions of a git repo",
@@ -59,9 +65,10 @@ func main() {
 				Action: runOnTags,
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "tagFilter",
-						Value: "",
-						Usage: "semver constraint to filter tags by `FILTER`, e.g. '>=1.0.0 <2.0.0'",
+						Name:    "tagFilter",
+						Aliases: []string{"t"},
+						Value:   "",
+						Usage:   "semver constraint to filter tags by `FILTER`, e.g. '>=1.0.0 <2.0.0'",
 						Action: func(ctx *cli.Context, s string) error {
 							var err error
 
@@ -75,6 +82,7 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "gitURL",
+				Aliases:     []string{"u"},
 				Value:       "",
 				Usage:       "fetch repository from `URL`",
 				Required:    true,
@@ -82,6 +90,7 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:        "command",
+				Aliases:     []string{"c"},
 				Value:       "",
 				Usage:       "On ech ref, `COMMAND` will be executed",
 				Required:    true,
@@ -89,14 +98,16 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:        "checkoutDir",
+				Aliases:     []string{"d"},
 				Value:       "",
 				Usage:       "The git repo will be checked out at `DIR`",
 				Destination: &checkoutDir,
 			},
 			&cli.StringFlag{
-				Name:  "outputFormat",
-				Value: "plain",
-				Usage: "output `FORMAT` to use [plain, jsonl]",
+				Name:    "outputFormat",
+				Aliases: []string{"f"},
+				Value:   "plain",
+				Usage:   "output `FORMAT` to use [plain, jsonl]",
 				Action: func(ctx *cli.Context, s string) error {
 					var err error
 
@@ -105,9 +116,10 @@ func main() {
 				},
 			},
 			&cli.BoolFlag{
-				Name:  "verbose",
-				Value: false,
-				Usage: "verbose mode",
+				Name:    "verbose",
+				Aliases: []string{"v"},
+				Value:   false,
+				Usage:   "verbose mode",
 				Action: func(ctx *cli.Context, b bool) error {
 					logLevel.SetLevel(zapcore.DebugLevel)
 					return nil
