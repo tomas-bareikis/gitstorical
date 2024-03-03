@@ -131,8 +131,6 @@ func main() {
 	if err := app.Run(os.Args); err != nil {
 		log.With(err).Fatal("gitstorcal error")
 	}
-
-	// Example: go run main.go --checkoutDir /tmp/foo --gitURL https://github.com/tomas-bareikis/gitstorical --command ls tags
 }
 
 func runOnTags(cCtx *cli.Context) error {
