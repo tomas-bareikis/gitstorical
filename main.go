@@ -21,6 +21,8 @@ import (
 	giturls "github.com/whilp/git-urls"
 )
 
+var gitURL string
+var command string
 var checkoutDir string
 var outputFormat = format.Plain
 var semverConstraints *semver.Constraints
@@ -39,6 +41,12 @@ func main() {
 	defer zapLog.Sync()
 	log = zapLog.Sugar()
 
+	cli.VersionFlag = &cli.BoolFlag{
+		Name:    "version",
+		Aliases: []string{"V"},
+		Usage:   "print only the version",
+	}
+
 	app := &cli.App{
 		Name:     "gitstorical",
 		Usage:    "runs a command on different versions of a git repo",
@@ -50,29 +58,56 @@ func main() {
 				Email: "tomas.bareikis@pm.me",
 			},
 		},
+		Commands: []*cli.Command{
+			{
+				Name:   "tags",
+				Usage:  "run on repository tags",
+				Action: runOnTags,
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "tagFilter",
+						Aliases: []string{"t"},
+						Value:   "",
+						Usage:   "semver constraint to filter tags by `FILTER`, e.g. '>=1.0.0 <2.0.0'",
+						Action: func(ctx *cli.Context, s string) error {
+							var err error
+
+							semverConstraints, err = semver.NewConstraint(s)
+							return err
+						},
+					},
+				},
+			},
+		},
 		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:  "verbose",
-				Value: false,
-				Usage: "verbose mode",
-				Action: func(ctx *cli.Context, b bool) error {
-					logLevel.SetLevel(zapcore.DebugLevel)
-					return nil
-				},
+			&cli.StringFlag{
+				Name:        "gitURL",
+				Aliases:     []string{"u"},
+				Value:       "",
+				Usage:       "fetch repository from `URL`",
+				Required:    true,
+				Destination: &gitURL,
 			},
 			&cli.StringFlag{
-				Name:  "checkoutDir",
-				Value: "",
-				Usage: "directory where the git repo will be checked out",
-				Action: func(ctx *cli.Context, s string) error {
-					checkoutDir = s
-					return nil
-				},
+				Name:        "command",
+				Aliases:     []string{"c"},
+				Value:       "",
+				Usage:       "On ech ref, `COMMAND` will be executed",
+				Required:    true,
+				Destination: &command,
 			},
 			&cli.StringFlag{
-				Name:  "outputFormat",
-				Value: "plain",
-				Usage: "output format to use [plain, jsonl], default - plain",
+				Name:        "checkoutDir",
+				Aliases:     []string{"d"},
+				Value:       "",
+				Usage:       "The git repo will be checked out at `DIR`",
+				Destination: &checkoutDir,
+			},
+			&cli.StringFlag{
+				Name:    "outputFormat",
+				Aliases: []string{"f"},
+				Value:   "plain",
+				Usage:   "output `FORMAT` to use [plain, jsonl]",
 				Action: func(ctx *cli.Context, s string) error {
 					var err error
 
@@ -80,33 +115,25 @@ func main() {
 					return err
 				},
 			},
-			&cli.StringFlag{
-				Name:  "tagFilter",
-				Value: "",
-				Usage: "semver constraint to filter tags by, e.g. '>=1.0.0 <2.0.0'",
-				Action: func(ctx *cli.Context, s string) error {
-					var err error
-
-					semverConstraints, err = semver.NewConstraint(s)
-					return err
+			&cli.BoolFlag{
+				Name:    "verbose",
+				Aliases: []string{"v"},
+				Value:   false,
+				Usage:   "verbose mode",
+				Action: func(ctx *cli.Context, b bool) error {
+					logLevel.SetLevel(zapcore.DebugLevel)
+					return nil
 				},
 			},
 		},
-		Action: do,
 	}
 
 	if err := app.Run(os.Args); err != nil {
 		log.With(err).Fatal("gitstorcal error")
 	}
-
-	// Example: go run main.go git@github.com:go-git/go-git.git 'gocyclo -avg .'
 }
 
-func do(cCtx *cli.Context) error {
-	args := cCtx.Args()
-	gitURL := args.Get(0)
-	command := args.Get(1)
-
+func runOnTags(cCtx *cli.Context) error {
 	l := log.With(
 		"gitURL", gitURL,
 		"command", command,
