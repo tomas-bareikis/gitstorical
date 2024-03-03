@@ -74,33 +74,24 @@ func main() {
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "gitURL",
-				Value:    "",
-				Usage:    "repository git URL",
-				Required: true,
-				Action: func(ctx *cli.Context, s string) error {
-					gitURL = s
-					return nil
-				},
+				Name:        "gitURL",
+				Value:       "",
+				Usage:       "repository git URL",
+				Required:    true,
+				Destination: &gitURL,
 			},
 			&cli.StringFlag{
-				Name:     "command",
-				Value:    "",
-				Usage:    "command to run on ech ref",
-				Required: true,
-				Action: func(ctx *cli.Context, s string) error {
-					command = s
-					return nil
-				},
+				Name:        "command",
+				Value:       "",
+				Usage:       "command to run on ech ref",
+				Required:    true,
+				Destination: &command,
 			},
 			&cli.StringFlag{
-				Name:  "checkoutDir",
-				Value: "",
-				Usage: "directory where the git repo will be checked out",
-				Action: func(ctx *cli.Context, s string) error {
-					checkoutDir = s
-					return nil
-				},
+				Name:        "checkoutDir",
+				Value:       "",
+				Usage:       "directory where the git repo will be checked out",
+				Destination: &checkoutDir,
 			},
 			&cli.StringFlag{
 				Name:  "outputFormat",
