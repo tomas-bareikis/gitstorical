@@ -50,6 +50,26 @@ func main() {
 				Email: "tomas.bareikis@pm.me",
 			},
 		},
+		Commands: []*cli.Command{
+			{
+				Name:   "tags",
+				Usage:  "run on repository tags",
+				Action: runOnTags,
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "tagFilter",
+						Value: "",
+						Usage: "semver constraint to filter tags by, e.g. '>=1.0.0 <2.0.0'",
+						Action: func(ctx *cli.Context, s string) error {
+							var err error
+
+							semverConstraints, err = semver.NewConstraint(s)
+							return err
+						},
+					},
+				},
+			},
+		},
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "verbose",
@@ -80,19 +100,7 @@ func main() {
 					return err
 				},
 			},
-			&cli.StringFlag{
-				Name:  "tagFilter",
-				Value: "",
-				Usage: "semver constraint to filter tags by, e.g. '>=1.0.0 <2.0.0'",
-				Action: func(ctx *cli.Context, s string) error {
-					var err error
-
-					semverConstraints, err = semver.NewConstraint(s)
-					return err
-				},
-			},
 		},
-		Action: do,
 	}
 
 	if err := app.Run(os.Args); err != nil {
@@ -102,7 +110,7 @@ func main() {
 	// Example: go run main.go git@github.com:go-git/go-git.git 'gocyclo -avg .'
 }
 
-func do(cCtx *cli.Context) error {
+func runOnTags(cCtx *cli.Context) error {
 	args := cCtx.Args()
 	gitURL := args.Get(0)
 	command := args.Get(1)
