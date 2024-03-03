@@ -61,7 +61,7 @@ func main() {
 					&cli.StringFlag{
 						Name:  "tagFilter",
 						Value: "",
-						Usage: "semver constraint to filter tags by, e.g. '>=1.0.0 <2.0.0'",
+						Usage: "semver constraint to filter tags by `FILTER`, e.g. '>=1.0.0 <2.0.0'",
 						Action: func(ctx *cli.Context, s string) error {
 							var err error
 
@@ -76,27 +76,27 @@ func main() {
 			&cli.StringFlag{
 				Name:        "gitURL",
 				Value:       "",
-				Usage:       "repository git URL",
+				Usage:       "fetch repository from `URL`",
 				Required:    true,
 				Destination: &gitURL,
 			},
 			&cli.StringFlag{
 				Name:        "command",
 				Value:       "",
-				Usage:       "command to run on ech ref",
+				Usage:       "On ech ref, `COMMAND` will be executed",
 				Required:    true,
 				Destination: &command,
 			},
 			&cli.StringFlag{
 				Name:        "checkoutDir",
 				Value:       "",
-				Usage:       "directory where the git repo will be checked out",
+				Usage:       "The git repo will be checked out at `DIR`",
 				Destination: &checkoutDir,
 			},
 			&cli.StringFlag{
 				Name:  "outputFormat",
 				Value: "plain",
-				Usage: "output format to use [plain, jsonl], default - plain",
+				Usage: "output `FORMAT` to use [plain, jsonl]",
 				Action: func(ctx *cli.Context, s string) error {
 					var err error
 
@@ -120,7 +120,7 @@ func main() {
 		log.With(err).Fatal("gitstorcal error")
 	}
 
-	// Example: go run main.go git@github.com:go-git/go-git.git 'gocyclo -avg .'
+	// Example: go run main.go --checkoutDir /tmp/foo --gitURL https://github.com/tomas-bareikis/gitstorical --command ls tags
 }
 
 func runOnTags(cCtx *cli.Context) error {
