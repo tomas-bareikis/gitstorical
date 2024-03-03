@@ -21,6 +21,8 @@ import (
 	giturls "github.com/whilp/git-urls"
 )
 
+var gitURL string
+var command string
 var checkoutDir string
 var outputFormat = format.Plain
 var semverConstraints *semver.Constraints
@@ -71,12 +73,23 @@ func main() {
 			},
 		},
 		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:  "verbose",
-				Value: false,
-				Usage: "verbose mode",
-				Action: func(ctx *cli.Context, b bool) error {
-					logLevel.SetLevel(zapcore.DebugLevel)
+			&cli.StringFlag{
+				Name:     "gitURL",
+				Value:    "",
+				Usage:    "repository git URL",
+				Required: true,
+				Action: func(ctx *cli.Context, s string) error {
+					gitURL = s
+					return nil
+				},
+			},
+			&cli.StringFlag{
+				Name:     "command",
+				Value:    "",
+				Usage:    "command to run on ech ref",
+				Required: true,
+				Action: func(ctx *cli.Context, s string) error {
+					command = s
 					return nil
 				},
 			},
@@ -100,6 +113,15 @@ func main() {
 					return err
 				},
 			},
+			&cli.BoolFlag{
+				Name:  "verbose",
+				Value: false,
+				Usage: "verbose mode",
+				Action: func(ctx *cli.Context, b bool) error {
+					logLevel.SetLevel(zapcore.DebugLevel)
+					return nil
+				},
+			},
 		},
 	}
 
@@ -111,10 +133,6 @@ func main() {
 }
 
 func runOnTags(cCtx *cli.Context) error {
-	args := cCtx.Args()
-	gitURL := args.Get(0)
-	command := args.Get(1)
-
 	l := log.With(
 		"gitURL", gitURL,
 		"command", command,
