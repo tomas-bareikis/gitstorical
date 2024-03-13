@@ -251,6 +251,7 @@ func processReference(
 		return "", errors.Wrap(err, "failed to checkout ref")
 	}
 
+	command = fmt.Sprintf("bash -c '%s'", command)
 	out, err := script.Exec(command).String()
 	if err != nil {
 		return out, errors.Wrap(err, "failed to execute command")
